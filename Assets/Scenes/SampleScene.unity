@@ -5463,11 +5463,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   squarePrefab: {fileID: 2515644075057217053, guid: 04f025a34b6cd084195bb5e383a6f439, type: 3}
-  x: 5
-  y: 5
-  spacing: 0
   whiteMaterial: {fileID: 2100000, guid: 1aa3edbfa3daf014eb8c42027dbc4802, type: 2}
   blackMaterial: {fileID: 2100000, guid: 7f0ea219aa20a55478a7e5eb4d9c5fb6, type: 2}
+  boardWidth: 5
+  boardHeight: 5
 --- !u!1 &1626326491
 GameObject:
   m_ObjectHideFlags: 0
