@@ -24,22 +24,12 @@ public class Manager : MonoBehaviour
 
     IEnumerator InstantiateCubeEdges()
     {
-        
-
         for (int i = 0; i < x; i++)
         {
             for (int j = 0; j < y; j++)
             {
-                position = new Vector3(i , 0, j);
-                intPosition = new Vector2Int(i, j);
-                square = Instantiate(squarePrefab, position, Quaternion.identity, transform);
-                squares[i, j] = new BoardSquare(intPosition,squarePrefab);
-                MeshRenderer renderer = square.GetComponentInChildren<MeshRenderer>();
-                if ((i + j) % 2 == 0)
-                    renderer.material = whiteMaterial;
-                else
-                    renderer.material = blackMaterial;
-
+                Vector2Int intPosition = new Vector2Int(i, j);
+                squares[i, j] = new BoardSquare(intPosition, squarePrefab, transform, whiteMaterial, blackMaterial);
                 yield return null;
             }
         }

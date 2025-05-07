@@ -3595,13 +3595,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 963194225}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 1, z: -10}
+  m_LocalRotation: {x: 0.41973156, y: -0, z: -0, w: 0.9076483}
+  m_LocalPosition: {x: 2.1, y: 4.14, z: -2.16}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 49.635, y: 0, z: 0}
 --- !u!1 &1060799605
 GameObject:
   m_ObjectHideFlags: 0
@@ -5463,8 +5463,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   squarePrefab: {fileID: 2515644075057217053, guid: 04f025a34b6cd084195bb5e383a6f439, type: 3}
-  x: 9
-  y: 9
+  x: 5
+  y: 5
   spacing: 0
   whiteMaterial: {fileID: 2100000, guid: 1aa3edbfa3daf014eb8c42027dbc4802, type: 2}
   blackMaterial: {fileID: 2100000, guid: 7f0ea219aa20a55478a7e5eb4d9c5fb6, type: 2}
