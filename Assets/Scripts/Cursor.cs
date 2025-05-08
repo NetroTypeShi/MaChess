@@ -14,8 +14,13 @@ public class Cursor
     public void Move(Vector2Int direction, int boardWidth, int boardHeight)
     {
         Vector2Int newPosition = Position + direction;
-        newPosition.x = (newPosition.x + boardWidth) % boardWidth;
-        newPosition.y = (newPosition.y + boardHeight) % boardHeight;
+        if (newPosition.x < 0) { newPosition.x = boardWidth - 1; }
+
+        else if (newPosition.x >= boardWidth) { newPosition.x = 0;}
+
+        if (newPosition.y < 0) { newPosition.y = boardHeight - 1; }             
+        else if (newPosition.y >= boardHeight) { newPosition.y = 0; }
+
         Position = newPosition;
     }
 }
