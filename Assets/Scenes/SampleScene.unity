@@ -5462,6 +5462,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d10aff02cbb13834e98d6d15afb7b6d7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  cursorVisual: {fileID: 0}
   squarePrefab: {fileID: 2515644075057217053, guid: 04f025a34b6cd084195bb5e383a6f439, type: 3}
   whiteMaterial: {fileID: 2100000, guid: 1aa3edbfa3daf014eb8c42027dbc4802, type: 2}
   blackMaterial: {fileID: 2100000, guid: 7f0ea219aa20a55478a7e5eb4d9c5fb6, type: 2}

@@ -4,6 +4,7 @@ using UnityEngine;
 
 public class Manager : MonoBehaviour
 {
+    [SerializeField] GameObject cursorVisual;
     public GameObject squarePrefab;
     public Material whiteMaterial;
     public Material blackMaterial;
@@ -16,7 +17,7 @@ public class Manager : MonoBehaviour
     void Start()
     {
         board = new Board();
-
+        cursorVisual = Instantiate(cursorVisual, new Vector3(cursor.Position.x, cursor.Position.y, 0), Quaternion.identity);
         board.CreateBoard(boardWidth, boardHeight, squarePrefab, transform, whiteMaterial, blackMaterial);
         cursor = new Cursor(boardWidth, boardHeight);
 
