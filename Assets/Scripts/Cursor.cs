@@ -33,6 +33,20 @@ public class Cursor
     {
         cursorVisualInstance.transform.position = new Vector3(Position.x, 0, Position.y);
     }
+
+    public void cursorColor()
+    {
+        /*
+        if(manager.whiteTurn == true)
+        {
+            cursorVisualInstance.GetComponent<MeshRenderer>().material.color = Color.red;
+        }
+        else if (manager.blackTurn == true)
+        {
+            cursorVisualInstance.GetComponent<MeshRenderer>().material.color = Color.blue;
+        }
+        */
+    }
 }
 
 
