@@ -5641,6 +5641,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   cursorVisual: {fileID: 3194367877736341042, guid: 149ede8019618a046aed09a5db4e90ea, type: 3}
   squarePrefab: {fileID: 2515644075057217053, guid: 04f025a34b6cd084195bb5e383a6f439, type: 3}
+  piecePrefab: {fileID: 2875870388804349064, guid: 7ee20f8315d7ac447bbc32d3d562fa17, type: 3}
   whiteMaterial: {fileID: 2100000, guid: 1aa3edbfa3daf014eb8c42027dbc4802, type: 2}
   blackMaterial: {fileID: 2100000, guid: 7f0ea219aa20a55478a7e5eb4d9c5fb6, type: 2}
   counterFill: {fileID: 1492406834}

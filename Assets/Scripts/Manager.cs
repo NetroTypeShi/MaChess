@@ -7,11 +7,13 @@ public class Manager : MonoBehaviour
 {
     [SerializeField] public GameObject cursorVisual;
     public GameObject squarePrefab;
+    public GameObject piecePrefab; 
     public Material whiteMaterial;
     public Material blackMaterial;
     public Cursor cursor;
     public Board board;
     public Image counterFill;
+    public Pieces pieces; 
     Vector2Int direction;
     public int boardWidth = 8;
     public int boardHeight = 8;
@@ -20,6 +22,7 @@ public class Manager : MonoBehaviour
     public bool whiteTurn;
     public bool blackTurn;
     float fillAmount;
+
 
     void Start()
     {
@@ -30,6 +33,9 @@ public class Manager : MonoBehaviour
         cursor.CursorVisual(cursorVisual);
         board.CreateBoard(boardWidth, boardHeight, squarePrefab, transform, whiteMaterial, blackMaterial);
         actualTime = maxTime;
+
+        pieces = new Pieces(piecePrefab, transform, whiteMaterial, blackMaterial);
+        pieces.InstantiatePieces(boardWidth, boardHeight);
     }
 
     void Update()
@@ -38,11 +44,12 @@ public class Manager : MonoBehaviour
         TimeBar();
         cursor.cursorColor();
     }
+
     private void HandleCursorInput()
     {
         direction = Vector2Int.zero;
 
-        if (whiteTurn == true) 
+        if (whiteTurn == true)
         {
             if (Input.GetKeyDown(KeyCode.W))
             {
@@ -61,7 +68,7 @@ public class Manager : MonoBehaviour
                 direction = Vector2Int.right;
             }
         }
-        if (blackTurn == true) 
+        if (blackTurn == true)
         {
             if (Input.GetKeyDown(KeyCode.UpArrow))
             {
@@ -80,7 +87,7 @@ public class Manager : MonoBehaviour
                 direction = Vector2Int.right;
             }
         }
-        
+
 
         if (direction != Vector2Int.zero)
         {
@@ -111,9 +118,9 @@ public class Manager : MonoBehaviour
                 print("White turn");
             }
             actualTime = maxTime;
-           
+
         }
     }
-    
 }
+
 
