@@ -4,11 +4,11 @@ using UnityEngine;
 
 public class Pieces
 {
-    private GameObject piecePrefab; 
-    private Transform boardTransform; 
-    private Material whiteMaterial; 
-    private Material blackMaterial; 
-
+    GameObject piecePrefab;
+    Transform boardTransform;
+    Material whiteMaterial;
+    Material blackMaterial;
+    Vector3 worldPosition;
     public Pieces(GameObject piecePrefab, Transform boardTransform, Material whiteMaterial, Material blackMaterial)
     {
         this.piecePrefab = piecePrefab;
@@ -21,20 +21,24 @@ public class Pieces
     {
         int middle = boardHeight / 2;
 
-        CreatePiece(new Vector3(middle, 0, 0), whiteMaterial);
-        CreatePiece(new Vector3(middle + 1, 0, 0), whiteMaterial);
-        CreatePiece(new Vector3(middle - 1, 0, 0), whiteMaterial);
+        CreatePiece(new Vector2Int(middle, 0), whiteMaterial);
+        CreatePiece(new Vector2Int(middle + 1, 0), whiteMaterial);
+        CreatePiece(new Vector2Int(middle - 1, 0), whiteMaterial);
 
-        CreatePiece(new Vector3(middle, 0, 4), blackMaterial);
-        CreatePiece(new Vector3(middle + 1, 0, 4), blackMaterial);
-        CreatePiece(new Vector3(middle - 1, 0, 4), blackMaterial);
+        CreatePiece(new Vector2Int(middle, 4), blackMaterial);
+        CreatePiece(new Vector2Int(middle + 1, 4), blackMaterial);
+        CreatePiece(new Vector2Int(middle - 1, 4), blackMaterial);
     }
 
-    private void CreatePiece(Vector3 position, Material material)
+    public void CreatePiece(Vector2Int position, Material material)
     {
-        GameObject piece = GameObject.Instantiate(piecePrefab, position, Quaternion.identity, boardTransform);
+        worldPosition = new Vector3(position.x, 0, position.y);
+
+        GameObject piece = GameObject.Instantiate(piecePrefab, worldPosition, Quaternion.identity, boardTransform);
+
         piece.GetComponentInChildren<MeshRenderer>().material = material;
     }
 }
+
 
 
