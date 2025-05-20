@@ -1,6 +1,5 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
+using System.Collections.Generic;
 
 public class Pieces
 {
@@ -9,6 +8,9 @@ public class Pieces
     private Material whiteMaterial;
     private Material blackMaterial;
     private Board board;
+
+    // Diccionario para asociar GameObjects con la lógica de las piezas
+    private Dictionary<GameObject, Piece> pieceLogicMap = new Dictionary<GameObject, Piece>();
 
     public Pieces(GameObject piecePrefab, Transform boardTransform, Material whiteMaterial, Material blackMaterial, Board board)
     {
@@ -40,12 +42,61 @@ public class Pieces
 
         GameObject piece = GameObject.Instantiate(piecePrefab, worldPosition, Quaternion.identity, boardTransform);
 
-        piece.GetComponentInChildren<MeshRenderer>().material = material; // Asignar material
-        piece.tag = tag; // Asignar tag
+        piece.GetComponentInChildren<MeshRenderer>().material = material;
+        piece.tag = tag;
 
-        board.squares[position.x, position.y].Piece = piece; // Asignar pieza a la casilla
+        // Crear la lógica de la pieza y asociarla con el GameObject
+        Piece pieceLogic = new Piece(10); // Vida inicial de 10
+        pieceLogicMap[piece] = pieceLogic; // Asociar la lógica con el GameObject
+
+        // Asociar la pieza con la casilla
+        BoardSquare square = board.squares[position.x, position.y];
+        square.Piece = piece;
+    }
+
+    public void DamagePiece(GameObject piece, float damage)
+    {
+        if (pieceLogicMap.TryGetValue(piece, out Piece pieceLogic))
+        {
+            pieceLogic.TakeDamage(damage);
+            UpdatePieceHeight(piece, pieceLogic);
+
+            if (pieceLogic.IsDestroyed())
+            {
+                Object.Destroy(piece);
+                pieceLogicMap.Remove(piece); // Eliminar del diccionario
+            }
+        }
+    }
+
+    public void HealPiece(GameObject piece, float healAmount)
+    {
+        if (pieceLogicMap.TryGetValue(piece, out Piece pieceLogic))
+        {
+            pieceLogic.Heal(healAmount);
+            UpdatePieceHeight(piece, pieceLogic);
+        }
+    }
+
+    private void UpdatePieceHeight(GameObject piece, Piece pieceLogic)
+    {
+        float healthFactor = pieceLogic.GetHealthFactor();
+        Vector3 defaultScale = new Vector3(0.6f, 1.37f, 0.6f); // Escala predeterminada
+        piece.transform.localScale = new Vector3(defaultScale.x, defaultScale.y * healthFactor, defaultScale.z);
+    }
+
+    public bool IsPieceDestroyed(GameObject piece)
+    {
+        if (pieceLogicMap.TryGetValue(piece, out Piece pieceLogic))
+        {
+            return pieceLogic.IsDestroyed();
+        }
+        return false;
     }
 }
+
+
+
 
 
 

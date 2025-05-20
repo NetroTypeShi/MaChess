@@ -1,11 +1,9 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class BoardSquare
 {
-    public Vector2Int Position { get; private set; }
-    public GameObject Piece { get; set; } // Referencia a la pieza en esta casilla
+    public Vector2Int Position { get; set; }
+    public GameObject Piece { get; set; } // GameObject de la pieza
 
     public BoardSquare(Vector2Int position, GameObject sqPrefab, Transform parent, Material whiteMaterial, Material blackMaterial)
     {

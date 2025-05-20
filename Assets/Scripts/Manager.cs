@@ -118,7 +118,7 @@ public class Manager : MonoBehaviour
             // Seleccionar una pieza si está presente en la casilla actual
             if (currentSquare.Piece != null)
             {
-                // Verificar si la pieza pertenece al turno actual
+                // Verificar si la pieza es su turno
                 isWhitePiece = currentSquare.Piece.CompareTag("WhitePiece");
                 isBlackPiece = currentSquare.Piece.CompareTag("BlackPiece");
 
@@ -172,7 +172,32 @@ public class Manager : MonoBehaviour
             }
             else
             {
-                print("La casilla de destino ya tiene una pieza. Movimiento no permitido.");
+                // Si la casilla de destino tiene una pieza enemiga, infligir daño
+                GameObject targetPiece = currentSquare.Piece;
+
+                if (targetPiece.tag != selectedPiece.tag)
+                {
+                    // Infligir daño a la pieza enemiga
+                    // Infligir daño a la pieza enemiga
+                    pieces.DamagePiece(targetPiece, 2); // Daño fijo de 2
+
+                    // Verificar si la pieza enemiga ha sido destruida
+                    if (pieces.IsPieceDestroyed(targetPiece)) // Nuevo método para verificar destrucción
+                    {
+                        currentSquare.Piece = null;
+                        print("La pieza enemiga ha sido destruida.");
+                    }
+
+                    // Deseleccionar la pieza
+                    selectedPiece = null;
+
+                    // Cambiar el turno
+                    ChangeTurn();
+                }
+                else
+                {
+                    print("No puedes atacar a una pieza de tu propio equipo.");
+                }
             }
         }
     }
