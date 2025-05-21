@@ -52,7 +52,11 @@ public class Pieces
         // Asociar la pieza con la casilla
         BoardSquare square = board.squares[position.x, position.y];
         square.Piece = piece;
+
+        // Almacenar la escala inicial de la pieza
+        piece.transform.localScale = new Vector3(0.9f, 1f, 0.9f); // Escala inicial predeterminada
     }
+
 
     public void DamagePiece(GameObject piece, float damage)
     {
@@ -81,8 +85,8 @@ public class Pieces
     private void UpdatePieceHeight(GameObject piece, Piece pieceLogic)
     {
         float healthFactor = pieceLogic.GetHealthFactor();
-        Vector3 defaultScale = new Vector3(0.6f, 1.37f, 0.6f); // Escala predeterminada
-        piece.transform.localScale = new Vector3(defaultScale.x, defaultScale.y * healthFactor, defaultScale.z);
+        Vector3 initialScale = new Vector3(0.9f, 1f, 0.9f); // Escala inicial predeterminada
+        piece.transform.localScale = new Vector3(initialScale.x, initialScale.y * healthFactor, initialScale.z);
     }
 
     public bool IsPieceDestroyed(GameObject piece)
