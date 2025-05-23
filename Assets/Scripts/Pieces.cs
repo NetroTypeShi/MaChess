@@ -97,6 +97,20 @@ public class Pieces
         }
         return false;
     }
+
+    public void BoostPieceHealth(GameObject piece, float boostAmount)
+    {
+        if (pieceLogicMap.TryGetValue(piece, out Piece pieceLogic))
+        {
+            pieceLogic.Heal(boostAmount); // Aumenta la salud de la pieza
+            UpdatePieceHeight(piece, pieceLogic); // Actualiza la altura de la pieza en función de su salud
+            Debug.Log($"La salud de la pieza ha sido aumentada en {boostAmount} puntos.");
+        }
+        else
+        {
+            Debug.LogError("No se encontró la lógica de la pieza en el diccionario.");
+        }
+    }
 }
 
 

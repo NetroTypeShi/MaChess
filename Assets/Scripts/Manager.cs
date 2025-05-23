@@ -8,6 +8,7 @@ public class Manager : MonoBehaviour
     [SerializeField] public GameObject cursorVisual;
     public GameObject squarePrefab;
     public GameObject piecePrefab;
+    public GameObject chestPrefab; // Prefab del cofre
     public Material whiteMaterial;
     public Material blackMaterial;
     public Cursor cursor;
@@ -31,6 +32,8 @@ public class Manager : MonoBehaviour
     int deltaX;
     int deltaY;
 
+    private Vector2Int chestPosition; // Posición actual del cofre
+
     void Start()
     {
         whiteTurn = true;
@@ -43,6 +46,9 @@ public class Manager : MonoBehaviour
 
         pieces = new Pieces(piecePrefab, transform, whiteMaterial, blackMaterial, board);
         pieces.InstantiatePieces(boardWidth, boardHeight);
+
+        // Iniciar la corrutina para spawnear cofres
+        StartCoroutine(SpawnChestCoroutine());
     }
 
     void Update()
@@ -57,6 +63,29 @@ public class Manager : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.Space))
         {
             HandlePieceSelectionOrMovement(currentSquare);
+        }
+    }
+
+    IEnumerator SpawnChestCoroutine()
+    {
+        while (true)
+        {
+            yield return new WaitForSeconds(10f); // Esperar 10 segundos
+
+            // Elegir una casilla aleatoria
+            int randomX = Random.Range(0, boardWidth);
+            int randomY = Random.Range(0, boardHeight);
+            chestPosition = new Vector2Int(randomX, randomY);
+
+            // Obtener la casilla y colocar el cofre
+            BoardSquare chestSquare = board.squares[chestPosition.x, chestPosition.y];
+            chestSquare.HasChest = true;
+
+            // Instanciar el cofre en la posición de la casilla
+            Vector3 chestWorldPosition = new Vector3(chestPosition.x, 0.5f, chestPosition.y);
+            Instantiate(chestPrefab, chestWorldPosition, Quaternion.identity, transform);
+
+            print($"Cofre spawneado en la posición {chestPosition}");
         }
     }
 
@@ -159,6 +188,12 @@ public class Manager : MonoBehaviour
 
                     print("Pieza movida a la posición " + destinationPosition);
 
+                    // Verificar si la casilla tiene un cofre
+                    if (currentSquare.HasChest)
+                    {
+                        HandleChestInteraction(currentSquare);
+                    }
+
                     // Deseleccionar la pieza
                     selectedPiece = null;
 
@@ -177,7 +212,6 @@ public class Manager : MonoBehaviour
 
                 if (targetPiece.tag != selectedPiece.tag)
                 {
-                    // Infligir daño a la pieza enemiga
                     // Infligir daño a la pieza enemiga
                     pieces.DamagePiece(targetPiece, 2); // Daño fijo de 2
 
@@ -199,6 +233,28 @@ public class Manager : MonoBehaviour
                     print("No puedes atacar a una pieza de tu propio equipo.");
                 }
             }
+        }
+    }
+
+    void HandleChestInteraction(BoardSquare chestSquare)
+    {
+        // El cofre siempre será una trampa
+        pieces.DamagePiece(selectedPiece, 2); // Infligir 2 puntos de daño
+        print("El cofre era una trampa. La pieza ha recibido 2 puntos de daño.");
+
+        // Eliminar el cofre de la casilla
+        chestSquare.HasChest = false;
+
+        // Buscar y destruir el cofre usando su tag
+        GameObject chest = GameObject.FindWithTag("Chest");
+        if (chest != null)
+        {
+            Destroy(chest);
+            print("El cofre ha sido consumido y eliminado.");
+        }
+        else
+        {
+            print("No se encontró el cofre para eliminar.");
         }
     }
 
@@ -233,3 +289,5 @@ public class Manager : MonoBehaviour
         }
     }
 }
+
+

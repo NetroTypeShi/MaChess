@@ -1,36 +1,52 @@
+using Unity.VisualScripting;
 using UnityEngine;
 
 public class Piece
 {
+    private float maxHealth = 20f;
     private float health;
-    private float maxHealth;
+    private float baseDamage = 5f;
 
+    void Update()
+    {
+        if (health >= maxHealth)
+        {
+            health = maxHealth;
+        }
+    }
     public Piece(float initialHealth)
     {
         health = initialHealth;
-        maxHealth = initialHealth;
     }
 
     public void TakeDamage(float damage)
     {
         health -= damage;
-        health = Mathf.Max(0, health); // No permitir valores negativos
     }
 
     public void Heal(float amount)
     {
         health += amount;
-        health = Mathf.Min(maxHealth, health); // No permitir superar la vida máxima
     }
 
     public float GetHealthFactor()
     {
-        return health / maxHealth; // Proporción de vida restante
+        return health;
     }
 
     public bool IsDestroyed()
     {
         return health <= 0;
+    }
+
+    public float GetDamage()
+    {
+        return baseDamage;
+    }
+
+    public void IncreaseDamage(float amount)
+    {
+        baseDamage += amount;
     }
 }
 
