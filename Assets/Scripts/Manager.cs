@@ -8,6 +8,10 @@ using UnityEngine.SceneManagement;
 public class Manager : MonoBehaviour
 {
     [SerializeField] public GameObject cursorVisual;
+    [SerializeField] AudioSource  moveSound;
+    [SerializeField] AudioSource destroySound;
+    [SerializeField] AudioSource upgradeSound;
+
     public GameObject squarePrefab;
     public GameObject piecePrefab;
     public GameObject chestPrefab;
@@ -220,13 +224,13 @@ public class Manager : MonoBehaviour
                     {
                         // Aplicar el boost correspondiente
                         pieces.ApplyChestBoost(selectedPiece, currentSquare.ChestType);
+                        upgradeSound.Play();
                         DestroyChest(currentSquare);
                     }
 
                     // Deseleccionar la pieza
                     selectedPiece = null;
-
-                    // Cambiar el turno
+                    moveSound.Play();
                     ChangeTurn();
                 }
                 else
@@ -250,6 +254,7 @@ public class Manager : MonoBehaviour
                     {
                         // Elimina la referencia en el tablero
                         currentSquare.Piece = null;
+                        destroySound.Play();
                         // Destruye el GameObject de la pieza
                         Destroy(targetPiece);
                         print("La pieza enemiga ha sido destruida.");
