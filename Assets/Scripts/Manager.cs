@@ -2,24 +2,28 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
+using UnityEngine.SceneManagement;
 
 public class Manager : MonoBehaviour
 {
     [SerializeField] public GameObject cursorVisual;
     public GameObject squarePrefab;
     public GameObject piecePrefab;
-    public GameObject chestPrefab; // Prefab del cofre
+    public GameObject chestPrefab;
     public Material whiteMaterial;
     public Material blackMaterial;
     public Cursor cursor;
     public Board board;
     public Image counterFill;
     public Pieces pieces;
+    public TMP_Text gameOverText; // Added for displaying game over message
     GameObject selectedPiece = null;
     Vector2Int direction;
     Vector2Int selectedPiecePosition;
     Vector2Int cursorPosition;
     Vector2Int destinationPosition;
+    Vector2Int chestPosition; // Posición actual del cofre
     public int boardWidth = 8;
     public int boardHeight = 8;
     public float maxTime;
@@ -31,8 +35,7 @@ public class Manager : MonoBehaviour
     bool isBlackPiece;
     int deltaX;
     int deltaY;
-
-    private Vector2Int chestPosition; // Posición actual del cofre
+    bool gameOver = false; // Variable para controlar el estado del juego
 
     void Start()
     {
@@ -53,6 +56,15 @@ public class Manager : MonoBehaviour
 
     void Update()
     {
+        if (gameOver)
+        {
+            if (Input.GetKeyDown(KeyCode.P))
+            {
+                SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+            }
+            return;
+        }
+
         HandleCursorInput();
         TimeBar();
         cursor.cursorColor();
@@ -64,6 +76,8 @@ public class Manager : MonoBehaviour
         {
             HandlePieceSelectionOrMovement(currentSquare);
         }
+
+        CheckGameOver();
     }
 
     IEnumerator SpawnChestCoroutine()
@@ -72,20 +86,33 @@ public class Manager : MonoBehaviour
         {
             yield return new WaitForSeconds(10f); // Esperar 10 segundos
 
-            // Elegir una casilla aleatoria
-            int randomX = Random.Range(0, boardWidth);
-            int randomY = Random.Range(0, boardHeight);
-            chestPosition = new Vector2Int(randomX, randomY);
+            bool chestPlaced = false;
+            int attempts = 0;
+            int maxAttempts = 100; // Evita bucles infinitos
 
-            // Obtener la casilla y colocar el cofre
-            BoardSquare chestSquare = board.squares[chestPosition.x, chestPosition.y];
-            chestSquare.HasChest = true;
+            while (!chestPlaced && attempts < maxAttempts)
+            {
+                int randomX = Random.Range(0, boardWidth);
+                int randomY = Random.Range(0, boardHeight);
+                chestPosition = new Vector2Int(randomX, randomY);
 
-            // Instanciar el cofre en la posición de la casilla
-            Vector3 chestWorldPosition = new Vector3(chestPosition.x, 0.5f, chestPosition.y);
-            Instantiate(chestPrefab, chestWorldPosition, Quaternion.identity, transform);
+                BoardSquare chestSquare = board.squares[chestPosition.x, chestPosition.y];
 
-            print($"Cofre spawneado en la posición {chestPosition}");
+                // Solo colocar cofre si la casilla NO tiene pieza ni cofre
+                if (chestSquare.Piece == null && !chestSquare.HasChest)
+                {
+                    chestSquare.HasChest = true;
+                    chestSquare.ChestType = (Random.value > 0.5f) ? "Health" : "Damage";
+
+                    Vector3 chestWorldPosition = new Vector3(chestPosition.x, 0.5f, chestPosition.y);
+                    GameObject chestObj = Instantiate(chestPrefab, chestWorldPosition, Quaternion.identity, transform);
+                    chestObj.tag = "Chest";
+
+                    print($"Cofre spawneado en la posición {chestPosition} de tipo {chestSquare.ChestType}");
+                    chestPlaced = true;
+                }
+                attempts++;
+            }
         }
     }
 
@@ -191,7 +218,9 @@ public class Manager : MonoBehaviour
                     // Verificar si la casilla tiene un cofre
                     if (currentSquare.HasChest)
                     {
-                        HandleChestInteraction(currentSquare);
+                        // Aplicar el boost correspondiente
+                        pieces.ApplyChestBoost(selectedPiece, currentSquare.ChestType);
+                        DestroyChest(currentSquare);
                     }
 
                     // Deseleccionar la pieza
@@ -212,14 +241,20 @@ public class Manager : MonoBehaviour
 
                 if (targetPiece.tag != selectedPiece.tag)
                 {
-                    // Infligir daño a la pieza enemiga
-                    pieces.DamagePiece(targetPiece, 2); // Daño fijo de 2
+                    // Obtener el daño real de la pieza atacante
+                    float attackerDamage = pieces.GetPieceDamage(selectedPiece);
+                    pieces.DamagePiece(targetPiece, attackerDamage);
 
                     // Verificar si la pieza enemiga ha sido destruida
-                    if (pieces.IsPieceDestroyed(targetPiece)) // Nuevo método para verificar destrucción
+                    if (pieces.IsPieceDestroyed(targetPiece))
                     {
+                        // Elimina la referencia en el tablero
                         currentSquare.Piece = null;
+                        // Destruye el GameObject de la pieza
+                        Destroy(targetPiece);
                         print("La pieza enemiga ha sido destruida.");
+                        // Comprueba si alguien ha ganado
+                        CheckGameOver();
                     }
 
                     // Deseleccionar la pieza
@@ -236,25 +271,23 @@ public class Manager : MonoBehaviour
         }
     }
 
-    void HandleChestInteraction(BoardSquare chestSquare)
+    void DestroyChest(BoardSquare chestSquare)
     {
-        // El cofre siempre será una trampa
-        pieces.DamagePiece(selectedPiece, 2); // Infligir 2 puntos de daño
-        print("El cofre era una trampa. La pieza ha recibido 2 puntos de daño.");
-
         // Eliminar el cofre de la casilla
         chestSquare.HasChest = false;
+        chestSquare.ChestType = "";
 
-        // Buscar y destruir el cofre usando su tag
-        GameObject chest = GameObject.FindWithTag("Chest");
-        if (chest != null)
+        // Buscar y destruir el cofre en la posición actual
+        GameObject[] chests = GameObject.FindGameObjectsWithTag("Chest");
+        foreach (GameObject chest in chests)
         {
-            Destroy(chest);
-            print("El cofre ha sido consumido y eliminado.");
-        }
-        else
-        {
-            print("No se encontró el cofre para eliminar.");
+            Vector3 chestPos = chest.transform.position;
+            if (Mathf.RoundToInt(chestPos.x) == chestSquare.Position.x && Mathf.RoundToInt(chestPos.z) == chestSquare.Position.y)
+            {
+                Destroy(chest);
+                print("El cofre ha sido destruido automáticamente.");
+                break;
+            }
         }
     }
 
@@ -288,6 +321,33 @@ public class Manager : MonoBehaviour
             ChangeTurn();
         }
     }
+
+    private void CheckGameOver()
+    {
+        // Busca si quedan piezas blancas y negras
+        bool whiteExists = GameObject.FindGameObjectWithTag("WhitePiece") != null;
+        bool blackExists = GameObject.FindGameObjectWithTag("BlackPiece") != null;
+
+        if (!whiteExists)
+        {
+            ShowGameOver("¡Negras ganaron!\nPresiona P para reiniciar");
+        }
+        else if (!blackExists)
+        {
+            ShowGameOver("¡Blancas ganaron!\nPresiona P para reiniciar");
+        }
+    }
+
+    private void ShowGameOver(string message)
+    {
+        gameOver = true;
+        if (gameOverText != null)
+        {
+            gameOverText.gameObject.SetActive(true);
+            gameOverText.text = message;
+        }
+    }
 }
+
 
 

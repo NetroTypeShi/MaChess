@@ -1,5 +1,6 @@
-using UnityEngine;
+using System.Collections;
 using System.Collections.Generic;
+using UnityEngine;
 
 public class Pieces
 {
@@ -9,7 +10,7 @@ public class Pieces
     private Material blackMaterial;
     private Board board;
 
-    // Diccionario para asociar GameObjects con la lógica de las piezas
+    private List<GameObject> allPieces = new List<GameObject>();
     private Dictionary<GameObject, Piece> pieceLogicMap = new Dictionary<GameObject, Piece>();
 
     public Pieces(GameObject piecePrefab, Transform boardTransform, Material whiteMaterial, Material blackMaterial, Board board)
@@ -23,40 +24,44 @@ public class Pieces
 
     public void InstantiatePieces(int boardWidth, int boardHeight)
     {
-        int middle = boardHeight / 2;
+        int center = boardWidth / 2;
+        int[] positions = { center - 1, center, center + 1 };
 
-        // Instanciar piezas blancas
-        CreatePiece(new Vector2Int(middle, 0), whiteMaterial, "WhitePiece");
-        CreatePiece(new Vector2Int(middle + 1, 0), whiteMaterial, "WhitePiece");
-        CreatePiece(new Vector2Int(middle - 1, 0), whiteMaterial, "WhitePiece");
+        // Blancas en y=0
+        foreach (int x in positions)
+        {
+            if (x >= 0 && x < boardWidth)
+                CreatePiece(new Vector2Int(x, 0), whiteMaterial, "WhitePiece");
+        }
 
-        // Instanciar piezas negras
-        CreatePiece(new Vector2Int(middle, 4), blackMaterial, "BlackPiece");
-        CreatePiece(new Vector2Int(middle + 1, 4), blackMaterial, "BlackPiece");
-        CreatePiece(new Vector2Int(middle - 1, 4), blackMaterial, "BlackPiece");
+        // Negras en y=4
+        foreach (int x in positions)
+        {
+            if (x >= 0 && x < boardWidth && boardHeight > 4)
+                CreatePiece(new Vector2Int(x, 4), blackMaterial, "BlackPiece");
+        }
     }
 
     private void CreatePiece(Vector2Int position, Material material, string tag)
     {
-        Vector3 worldPosition = new Vector3(position.x, 0, position.y);
+        // Obtener la posición local de la casilla en el tablero
+        GameObject squareObj = board.squares[position.x, position.y].SquareObject;
+        Vector3 localPosition = squareObj.transform.localPosition;
 
-        GameObject piece = GameObject.Instantiate(piecePrefab, worldPosition, Quaternion.identity, boardTransform);
-
-        piece.GetComponentInChildren<MeshRenderer>().material = material;
+        GameObject piece = GameObject.Instantiate(piecePrefab, localPosition, Quaternion.identity, boardTransform);
+        piece.GetComponentInChildren<Renderer>().material = material;
         piece.tag = tag;
 
-        // Crear la lógica de la pieza y asociarla con el GameObject
-        Piece pieceLogic = new Piece(10); // Vida inicial de 10
-        pieceLogicMap[piece] = pieceLogic; // Asociar la lógica con el GameObject
+        // Asignar lógica de la pieza
+        Piece pieceLogic = new Piece(10f); // Salud inicial de 10
+        pieceLogicMap[piece] = pieceLogic;
 
-        // Asociar la pieza con la casilla
-        BoardSquare square = board.squares[position.x, position.y];
-        square.Piece = piece;
+        // Agregar la pieza al tablero
+        board.squares[position.x, position.y].Piece = piece;
 
-        // Almacenar la escala inicial de la pieza
-        piece.transform.localScale = new Vector3(0.9f, 1f, 0.9f); // Escala inicial predeterminada
+        // Guardar la pieza en la lista
+        allPieces.Add(piece);
     }
-
 
     public void DamagePiece(GameObject piece, float damage)
     {
@@ -64,12 +69,6 @@ public class Pieces
         {
             pieceLogic.TakeDamage(damage);
             UpdatePieceHeight(piece, pieceLogic);
-
-            if (pieceLogic.IsDestroyed())
-            {
-                Object.Destroy(piece);
-                pieceLogicMap.Remove(piece); // Eliminar del diccionario
-            }
         }
     }
 
@@ -85,8 +84,8 @@ public class Pieces
     private void UpdatePieceHeight(GameObject piece, Piece pieceLogic)
     {
         float healthFactor = pieceLogic.GetHealthFactor();
-        Vector3 initialScale = new Vector3(0.9f, 1f, 0.9f); // Escala inicial predeterminada
-        piece.transform.localScale = new Vector3(initialScale.x, initialScale.y * healthFactor, initialScale.z);
+        Vector3 scale = piece.transform.localScale;
+        piece.transform.localScale = new Vector3(scale.x, healthFactor, scale.z);
     }
 
     public bool IsPieceDestroyed(GameObject piece)
@@ -102,16 +101,49 @@ public class Pieces
     {
         if (pieceLogicMap.TryGetValue(piece, out Piece pieceLogic))
         {
-            pieceLogic.Heal(boostAmount); // Aumenta la salud de la pieza
-            UpdatePieceHeight(piece, pieceLogic); // Actualiza la altura de la pieza en función de su salud
-            Debug.Log($"La salud de la pieza ha sido aumentada en {boostAmount} puntos.");
-        }
-        else
-        {
-            Debug.LogError("No se encontró la lógica de la pieza en el diccionario.");
+            pieceLogic.Heal(boostAmount);
+            UpdatePieceHeight(piece, pieceLogic);
         }
     }
+
+    public void BoostPieceDamage(GameObject piece, float boostAmount)
+    {
+        if (pieceLogicMap.TryGetValue(piece, out Piece pieceLogic))
+        {
+            pieceLogic.IncreaseDamage(boostAmount);
+        }
+    }
+
+    // Aplica boost según el tipo de cofre
+    public void ApplyChestBoost(GameObject piece, string chestType)
+    {
+        if (chestType == "Health")
+        {
+            BoostPieceHealth(piece, 5f);
+        }
+        else if (chestType == "Damage")
+        {
+            BoostPieceDamage(piece, 2f); 
+        }
+    }
+
+    public float GetPieceDamage(GameObject piece)
+    {
+        if (pieceLogicMap.TryGetValue(piece, out Piece pieceLogic))
+        {
+            return pieceLogic.GetDamage();
+        }
+        return 0f;
+    }
+
+    public void ExampleUsage(GameObject targetPiece, GameObject selectedPiece)
+    {
+        // Obtener el daño real de la pieza atacante
+        float attackerDamage = GetPieceDamage(selectedPiece);
+        DamagePiece(targetPiece, attackerDamage);
+    }
 }
+
 
 
 

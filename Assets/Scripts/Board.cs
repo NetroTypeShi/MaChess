@@ -14,8 +14,14 @@ public class Board
         {
             for (int y = 0; y < height; y++)
             {
-                Vector2Int position = new Vector2Int(x, y);
-                squares[x, y] = new BoardSquare(position, squarePrefab, parent, whiteMaterial, blackMaterial);
+                Vector3 position = new Vector3(x, 0, y);
+                GameObject squareObj = GameObject.Instantiate(squarePrefab, position, Quaternion.identity, parent);
+
+                // Alternar materiales para efecto tablero de ajedrez
+                Material mat = ((x + y) % 2 == 0) ? whiteMaterial : blackMaterial;
+                squareObj.GetComponentInChildren<Renderer>().material = mat;
+
+                squares[x, y] = new BoardSquare(new Vector2Int(x, y), squareObj, parent, whiteMaterial, blackMaterial);
             }
         }
     }

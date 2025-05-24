@@ -3,20 +3,16 @@ using UnityEngine;
 
 public class Piece
 {
-    private float maxHealth = 20f;
+    private float maxHealth = 10f;
     private float health;
-    private float baseDamage = 5f;
+    private float baseDamage = 2f;
 
-    void Update()
-    {
-        if (health >= maxHealth)
-        {
-            health = maxHealth;
-        }
-    }
     public Piece(float initialHealth)
     {
-        health = initialHealth;
+        // si la vida inicial es menor que 0, se pone a 0,
+        // si es más que el máximo, se pone al máximo
+        // si está entre 0 y el máximo, se deja tal cual
+        health = Mathf.Clamp(initialHealth, 0, maxHealth);
     }
 
     public void TakeDamage(float damage)
@@ -31,7 +27,10 @@ public class Piece
 
     public float GetHealthFactor()
     {
-        return health;
+        // Si el valor de salud es menor que 0, se va a 0,
+        // si el valor es más que 1, se va a 1
+        // si está entre 0 y uno lo devuleve tal cual
+        return Mathf.Clamp01(health / maxHealth);
     }
 
     public bool IsDestroyed()
