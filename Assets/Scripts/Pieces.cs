@@ -10,8 +10,7 @@ public class Pieces
     private Material blackMaterial;
     private Board board;
 
-    private List<GameObject> allPieces = new List<GameObject>();
-    private Dictionary<GameObject, Piece> pieceLogicMap = new Dictionary<GameObject, Piece>();
+    private List<Piece> allPieces = new List<Piece>();
 
     public Pieces(GameObject piecePrefab, Transform boardTransform, Material whiteMaterial, Material blackMaterial, Board board)
     {
@@ -44,104 +43,103 @@ public class Pieces
 
     private void CreatePiece(Vector2Int position, Material material, string tag)
     {
-        // Obtener la posición local de la casilla en el tablero
         GameObject squareObj = board.squares[position.x, position.y].SquareObject;
         Vector3 localPosition = squareObj.transform.localPosition;
 
-        GameObject piece = GameObject.Instantiate(piecePrefab, localPosition, Quaternion.identity, boardTransform);
-        piece.GetComponentInChildren<Renderer>().material = material;
-        piece.tag = tag;
+        GameObject pieceGO = GameObject.Instantiate(piecePrefab, localPosition, Quaternion.identity, boardTransform);
+        pieceGO.GetComponentInChildren<Renderer>().material = material;
+        pieceGO.tag = tag;
 
-        // Asignar lógica de la pieza
         Piece pieceLogic = new Piece(10f); // Salud inicial de 10
-        pieceLogicMap[piece] = pieceLogic;
+        allPieces.Add(pieceLogic);
 
-        // Agregar la pieza al tablero
-        board.squares[position.x, position.y].Piece = piece;
+        board.squares[position.x, position.y].Piece = pieceGO;
 
-        // Guardar la pieza en la lista
-        allPieces.Add(piece);
+        pieceGO.AddComponent<PieceComponent>().Init(pieceLogic);
     }
 
-    public void DamagePiece(GameObject piece, float damage)
+    public void DamagePiece(GameObject pieceGO, float damage)
     {
-        if (pieceLogicMap.TryGetValue(piece, out Piece pieceLogic))
+        Piece pieceLogic = GetPieceLogic(pieceGO);
+        if (pieceLogic != null)
         {
             pieceLogic.TakeDamage(damage);
-            UpdatePieceHeight(piece, pieceLogic);
+            UpdatePieceHeight(pieceGO, pieceLogic);
         }
     }
 
-    public void HealPiece(GameObject piece, float healAmount)
+    public void HealPiece(GameObject pieceGO, float healAmount)
     {
-        if (pieceLogicMap.TryGetValue(piece, out Piece pieceLogic))
+        Piece pieceLogic = GetPieceLogic(pieceGO);
+        if (pieceLogic != null)
         {
             pieceLogic.Heal(healAmount);
-            UpdatePieceHeight(piece, pieceLogic);
+            UpdatePieceHeight(pieceGO, pieceLogic);
         }
     }
 
-    private void UpdatePieceHeight(GameObject piece, Piece pieceLogic)
+    private void UpdatePieceHeight(GameObject pieceGO, Piece pieceLogic)
     {
         float healthFactor = pieceLogic.GetHealthFactor();
-        Vector3 scale = piece.transform.localScale;
-        piece.transform.localScale = new Vector3(scale.x, healthFactor, scale.z);
+        Vector3 scale = pieceGO.transform.localScale;
+        pieceGO.transform.localScale = new Vector3(scale.x, healthFactor, scale.z);
     }
 
-    public bool IsPieceDestroyed(GameObject piece)
+    public bool IsPieceDestroyed(GameObject pieceGO)
     {
-        if (pieceLogicMap.TryGetValue(piece, out Piece pieceLogic))
-        {
-            return pieceLogic.IsDestroyed();
-        }
-        return false;
+        Piece pieceLogic = GetPieceLogic(pieceGO);
+        return pieceLogic != null && pieceLogic.IsDestroyed();
     }
 
-    public void BoostPieceHealth(GameObject piece, float boostAmount)
+    public void BoostPieceHealth(GameObject pieceGO, float boostAmount)
     {
-        if (pieceLogicMap.TryGetValue(piece, out Piece pieceLogic))
+        Piece pieceLogic = GetPieceLogic(pieceGO);
+        if (pieceLogic != null)
         {
             pieceLogic.Heal(boostAmount);
-            UpdatePieceHeight(piece, pieceLogic);
+            UpdatePieceHeight(pieceGO, pieceLogic);
         }
     }
 
-    public void BoostPieceDamage(GameObject piece, float boostAmount)
+    public void BoostPieceDamage(GameObject pieceGO, float boostAmount)
     {
-        if (pieceLogicMap.TryGetValue(piece, out Piece pieceLogic))
+        Piece pieceLogic = GetPieceLogic(pieceGO);
+        if (pieceLogic != null)
         {
             pieceLogic.IncreaseDamage(boostAmount);
         }
     }
 
-    // Aplica boost según el tipo de cofre
-    public void ApplyChestBoost(GameObject piece, string chestType)
+    public void ApplyChestBoost(GameObject pieceGO, string chestType)
     {
         if (chestType == "Health")
         {
-            BoostPieceHealth(piece, 5f);
+            BoostPieceHealth(pieceGO, 5f);
         }
         else if (chestType == "Damage")
         {
-            BoostPieceDamage(piece, 2f); 
+            BoostPieceDamage(pieceGO, 2f);
         }
     }
 
-    public float GetPieceDamage(GameObject piece)
+    public float GetPieceDamage(GameObject pieceGO)
     {
-        if (pieceLogicMap.TryGetValue(piece, out Piece pieceLogic))
-        {
-            return pieceLogic.GetDamage();
-        }
-        return 0f;
+        Piece pieceLogic = GetPieceLogic(pieceGO);
+        return pieceLogic != null ? pieceLogic.GetDamage() : 0f;
     }
 
-    public void ExampleUsage(GameObject targetPiece, GameObject selectedPiece)
+    private Piece GetPieceLogic(GameObject pieceGO)
     {
-        // Obtener el daño real de la pieza atacante
-        float attackerDamage = GetPieceDamage(selectedPiece);
-        DamagePiece(targetPiece, attackerDamage);
+        var comp = pieceGO.GetComponent<PieceComponent>();
+        return comp != null ? comp.PieceLogic : null;
     }
+}
+
+// Componente auxiliar para asociar la lógica al GameObject visual
+public class PieceComponent : MonoBehaviour
+{
+    public Piece PieceLogic { get; private set; }
+    public void Init(Piece logic) => PieceLogic = logic;
 }
 
 

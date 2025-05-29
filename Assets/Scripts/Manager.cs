@@ -8,7 +8,7 @@ using UnityEngine.SceneManagement;
 public class Manager : MonoBehaviour
 {
     [SerializeField] public GameObject cursorVisual;
-    [SerializeField] AudioSource  moveSound;
+    [SerializeField] AudioSource moveSound;
     [SerializeField] AudioSource destroySound;
     [SerializeField] AudioSource upgradeSound;
 
@@ -21,30 +21,29 @@ public class Manager : MonoBehaviour
     public Board board;
     public Image counterFill;
     public Pieces pieces;
-    public TMP_Text gameOverText; // Added for displaying game over message
+    public TMP_Text gameOverText;
     GameObject selectedPiece = null;
     Vector2Int direction;
     Vector2Int selectedPiecePosition;
     Vector2Int cursorPosition;
     Vector2Int destinationPosition;
-    Vector2Int chestPosition; // Posición actual del cofre
+    Vector2Int chestPosition;
     public int boardWidth = 8;
     public int boardHeight = 8;
     public float maxTime;
-    public float actualTime;
-    public bool whiteTurn;
-    public bool blackTurn;
-    float fillAmount;
+    public bool isWhiteTurn; // true = blancas, false = negras
+    bool gameOver = false;
     bool isWhitePiece;
     bool isBlackPiece;
+    float actualTime;
+    float fillAmount;
+    float chestSpawnTime = 10f; // Tiempo por turno en segundos
     int deltaX;
     int deltaY;
-    bool gameOver = false; // Variable para controlar el estado del juego
 
     void Start()
     {
-        whiteTurn = true;
-        blackTurn = false;
+        isWhiteTurn = true;
         board = new Board();
         cursor = new Cursor(boardWidth, boardHeight);
         cursor.CursorVisual(cursorVisual);
@@ -54,7 +53,6 @@ public class Manager : MonoBehaviour
         pieces = new Pieces(piecePrefab, transform, whiteMaterial, blackMaterial, board);
         pieces.InstantiatePieces(boardWidth, boardHeight);
 
-        // Iniciar la corrutina para spawnear cofres
         StartCoroutine(SpawnChestCoroutine());
     }
 
@@ -81,18 +79,22 @@ public class Manager : MonoBehaviour
             HandlePieceSelectionOrMovement(currentSquare);
         }
 
-        CheckGameOver();
+        // Comprobar victoria siempre que no haya terminado el juego
+        if (!gameOver)
+        {
+            CheckGameOver();
+        }
     }
 
     IEnumerator SpawnChestCoroutine()
     {
         while (true)
         {
-            yield return new WaitForSeconds(10f); // Esperar 10 segundos
+            yield return new WaitForSeconds(chestSpawnTime);
 
             bool chestPlaced = false;
             int attempts = 0;
-            int maxAttempts = 100; // Evita bucles infinitos
+            int maxAttempts = 100;
 
             while (!chestPlaced && attempts < maxAttempts)
             {
@@ -102,7 +104,6 @@ public class Manager : MonoBehaviour
 
                 BoardSquare chestSquare = board.squares[chestPosition.x, chestPosition.y];
 
-                // Solo colocar cofre si la casilla NO tiene pieza ni cofre
                 if (chestSquare.Piece == null && !chestSquare.HasChest)
                 {
                     chestSquare.HasChest = true;
@@ -124,43 +125,19 @@ public class Manager : MonoBehaviour
     {
         direction = Vector2Int.zero;
 
-        if (whiteTurn == true)
+        if (isWhiteTurn)
         {
-            if (Input.GetKeyDown(KeyCode.W))
-            {
-                direction = Vector2Int.up;
-            }
-            if (Input.GetKeyDown(KeyCode.S))
-            {
-                direction = Vector2Int.down;
-            }
-            if (Input.GetKeyDown(KeyCode.A))
-            {
-                direction = Vector2Int.left;
-            }
-            if (Input.GetKeyDown(KeyCode.D))
-            {
-                direction = Vector2Int.right;
-            }
+            if (Input.GetKeyDown(KeyCode.W)) direction = Vector2Int.up;
+            if (Input.GetKeyDown(KeyCode.S)) direction = Vector2Int.down;
+            if (Input.GetKeyDown(KeyCode.A)) direction = Vector2Int.left;
+            if (Input.GetKeyDown(KeyCode.D)) direction = Vector2Int.right;
         }
-        if (blackTurn == true)
+        else // negras
         {
-            if (Input.GetKeyDown(KeyCode.UpArrow))
-            {
-                direction = Vector2Int.up;
-            }
-            if (Input.GetKeyDown(KeyCode.DownArrow))
-            {
-                direction = Vector2Int.down;
-            }
-            if (Input.GetKeyDown(KeyCode.LeftArrow))
-            {
-                direction = Vector2Int.left;
-            }
-            if (Input.GetKeyDown(KeyCode.RightArrow))
-            {
-                direction = Vector2Int.right;
-            }
+            if (Input.GetKeyDown(KeyCode.UpArrow)) direction = Vector2Int.up;
+            if (Input.GetKeyDown(KeyCode.DownArrow)) direction = Vector2Int.down;
+            if (Input.GetKeyDown(KeyCode.LeftArrow)) direction = Vector2Int.left;
+            if (Input.GetKeyDown(KeyCode.RightArrow)) direction = Vector2Int.right;
         }
 
         if (direction != Vector2Int.zero)
@@ -175,14 +152,12 @@ public class Manager : MonoBehaviour
     {
         if (selectedPiece == null)
         {
-            // Seleccionar una pieza si está presente en la casilla actual
             if (currentSquare.Piece != null)
             {
-                // Verificar si la pieza es su turno
                 isWhitePiece = currentSquare.Piece.CompareTag("WhitePiece");
                 isBlackPiece = currentSquare.Piece.CompareTag("BlackPiece");
 
-                if ((whiteTurn && isWhitePiece) || (blackTurn && isBlackPiece))
+                if ((isWhiteTurn && isWhitePiece) || (!isWhiteTurn && isBlackPiece))
                 {
                     selectedPiece = currentSquare.Piece;
                     selectedPiecePosition = currentSquare.Position;
@@ -190,7 +165,7 @@ public class Manager : MonoBehaviour
                 }
                 else
                 {
-                    print("No puedes seleccionar esta pieza. Es el turno de las " + (whiteTurn ? "blancas" : "negras") + ".");
+                    print("No puedes seleccionar esta pieza. Es el turno de las " + (isWhiteTurn ? "blancas" : "negras") + ".");
                 }
             }
             else
@@ -200,38 +175,30 @@ public class Manager : MonoBehaviour
         }
         else
         {
-            // Mover la pieza seleccionada a la nueva casilla
             if (currentSquare.Piece == null)
             {
-                // Validar que el movimiento sea de un cuadro en una dirección válida
                 destinationPosition = currentSquare.Position;
                 deltaX = Mathf.Abs(destinationPosition.x - selectedPiecePosition.x);
                 deltaY = Mathf.Abs(destinationPosition.y - selectedPiecePosition.y);
 
                 if ((deltaX == 1 && deltaY == 0) || (deltaX == 0 && deltaY == 1))
                 {
-                    // Movimiento válido: actualizar la posición de la pieza seleccionada
                     selectedPiece.transform.position = new Vector3(destinationPosition.x, 0, destinationPosition.y);
 
-                    // Actualizar las referencias en las casillas
                     board.squares[selectedPiecePosition.x, selectedPiecePosition.y].Piece = null;
                     currentSquare.Piece = selectedPiece;
 
                     print("Pieza movida a la posición " + destinationPosition);
 
-                    // Verificar si la casilla tiene un cofre
                     if (currentSquare.HasChest)
                     {
-                        // Aplicar el boost correspondiente
                         pieces.ApplyChestBoost(selectedPiece, currentSquare.ChestType);
                         upgradeSound.Play();
                         DestroyChest(currentSquare);
                     }
 
-                    // Deseleccionar la pieza
                     selectedPiece = null;
                     moveSound.Play();
-                    ChangeTurn();
                 }
                 else
                 {
@@ -240,33 +207,23 @@ public class Manager : MonoBehaviour
             }
             else
             {
-                // Si la casilla de destino tiene una pieza enemiga, infligir daño
                 GameObject targetPiece = currentSquare.Piece;
 
                 if (targetPiece.tag != selectedPiece.tag)
                 {
-                    // Obtener el daño real de la pieza atacante
                     float attackerDamage = pieces.GetPieceDamage(selectedPiece);
                     pieces.DamagePiece(targetPiece, attackerDamage);
 
-                    // Verificar si la pieza enemiga ha sido destruida
                     if (pieces.IsPieceDestroyed(targetPiece))
                     {
-                        // Elimina la referencia en el tablero
                         currentSquare.Piece = null;
                         destroySound.Play();
-                        // Destruye el GameObject de la pieza
                         Destroy(targetPiece);
                         print("La pieza enemiga ha sido destruida.");
-                        // Comprueba si alguien ha ganado
                         CheckGameOver();
                     }
 
-                    // Deseleccionar la pieza
                     selectedPiece = null;
-
-                    // Cambiar el turno
-                    ChangeTurn();
                 }
                 else
                 {
@@ -278,11 +235,9 @@ public class Manager : MonoBehaviour
 
     void DestroyChest(BoardSquare chestSquare)
     {
-        // Eliminar el cofre de la casilla
         chestSquare.HasChest = false;
         chestSquare.ChestType = "";
 
-        // Buscar y destruir el cofre en la posición actual
         GameObject[] chests = GameObject.FindGameObjectsWithTag("Chest");
         foreach (GameObject chest in chests)
         {
@@ -298,21 +253,9 @@ public class Manager : MonoBehaviour
 
     void ChangeTurn()
     {
-        if (whiteTurn)
-        {
-            whiteTurn = false;
-            blackTurn = true;
-            counterFill.color = Color.black;
-            print("Turno de las negras");
-        }
-        else
-        {
-            whiteTurn = true;
-            blackTurn = false;
-            counterFill.color = Color.white;
-            print("Turno de las blancas");
-        }
-
+        isWhiteTurn = !isWhiteTurn;
+        counterFill.color = isWhiteTurn ? Color.white : Color.black;
+        print(isWhiteTurn ? "Turno de las blancas" : "Turno de las negras");
         actualTime = maxTime;
     }
 
@@ -329,7 +272,6 @@ public class Manager : MonoBehaviour
 
     private void CheckGameOver()
     {
-        // Busca si quedan piezas blancas y negras
         bool whiteExists = GameObject.FindGameObjectWithTag("WhitePiece") != null;
         bool blackExists = GameObject.FindGameObjectWithTag("BlackPiece") != null;
 

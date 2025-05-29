@@ -5792,7 +5792,6 @@ MonoBehaviour:
   boardWidth: 5
   boardHeight: 5
   maxTime: 10
-  actualTime: 0
   whiteTurn: 0
   blackTurn: 0
 --- !u!82 &1560657823
